@@ -7,7 +7,7 @@ version: '1.0.0'
 config-version: 2
 
 # This setting configures which "profile" dbt uses for this project.
-profile: 'dbt_tpcdi'
+profile: 'tpcdi_bq'
 
 # These configurations specify where dbt should look for different types of files.
 # The `model-paths` config, for example, states that models in this project can be
@@ -28,23 +28,15 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 models:
   dbt_tpcdi:
-    example:
-      +materialized: view
     bronze:
       +schema: bronze
-      +materialized: dynamic_table
-      +snowflake_warehouse: tpcdi_large
-      +target_lag: downstream
+      +materialized: materialized_view
     silver:
       +schema: silver
-      +materialized: dynamic_table
-      +snowflake_warehouse: tpcdi_large
-      +target_lag: '10 minutes'
+      +materialized: materialized_view
     gold:
       +schema: gold
-      +materialized: dynamic_table
-      +snowflake_warehouse: tpcdi_large
-      +target_lag: '20 minutes'
+      +materialized: materialized_view
     work:
       +schema: work
       +materialized: ephemeral
