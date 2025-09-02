@@ -16,7 +16,7 @@ with s1 as (
         DILUTED_SH_OUT,
         coalesce(c1.name,c2.name) company_name,
         coalesce(c1.company_id, c2.company_id) company_id,
-        pts as effective_timestamp
+        cast(pts as timestamp) as effective_timestamp
     from {{ ref('finwire_financial') }} s 
     left join {{ ref('companies') }} c1
     on s.cik = c1.company_id
@@ -27,17 +27,15 @@ with s1 as (
 )
 select
     *,
-    ifnull(
-        timestampadd(
-        'millisecond',
-        -1,
-        lag(effective_timestamp) over (
-            partition by company_id
-            order by
-            effective_timestamp desc
-        )
+    IFNULL(
+        TIMESTAMP_SUB(
+            TIMESTAMP(lag(effective_timestamp) over (
+                partition by company_id
+                order by
+                effective_timestamp desc
+            )), INTERVAL 1 MILLISECOND
         ),
-        to_timestamp('9999-12-31 23:59:59.999')
+        TIMESTAMP('9999-12-31 23:59:59.999')
     ) as end_timestamp,
     CASE
         WHEN (

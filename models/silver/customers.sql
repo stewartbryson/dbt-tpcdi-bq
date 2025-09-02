@@ -1,11 +1,10 @@
 select
     action_type,
-    decode(action_type,
-      'NEW','Active',
-      'ADDACCT','Active',
-      'UPDACCT','Active',
-      'UPDCUST','Active',
-      'INACT','Inactive') status,
+        CASE
+            WHEN action_type IN ('NEW', 'ADDACCT', 'UPDACCT', 'UPDCUST') THEN 'Active'
+            WHEN action_type = 'INACT' THEN 'Inactive'
+            ELSE NULL
+        END status,
     c_id customer_id,
     ca_id account_id,
     c_tax_id tax_id,
@@ -33,17 +32,15 @@ select
     ca_tax_st account_tax_status,
     ca_b_id broker_id,
     action_ts as effective_timestamp,
-    ifnull(
-        timestampadd(
-            'millisecond',
-            -1,
-            lag(action_ts) over (
+    IFNULL(
+        TIMESTAMP_SUB(
+            TIMESTAMP(lag(action_ts) over (
                 partition by c_id
                 order by
                 action_ts desc
-            )
+            )), INTERVAL 1 MILLISECOND
         ),
-        to_timestamp('9999-12-31 23:59:59.999')
+        TIMESTAMP('9999-12-31 23:59:59.999')
     ) as end_timestamp,
     CASE
         WHEN (

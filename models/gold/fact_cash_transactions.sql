@@ -1,7 +1,7 @@
 with s1 as (
     select
         *,
-        to_date(transaction_timestamp) sk_transaction_date
+        DATE(transaction_timestamp) sk_transaction_date
     from
         {{ ref('cash_transactions') }}
 )
@@ -19,4 +19,4 @@ join
 on
     s1.account_id = a.account_id
 and
-    s1.transaction_timestamp between a.effective_timestamp and a.end_timestamp
+    TIMESTAMP(s1.transaction_timestamp) between a.effective_timestamp and a.end_timestamp

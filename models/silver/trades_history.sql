@@ -18,17 +18,15 @@ select
     t_tax tax,
     us.st_name update_status,
     th_dts effective_timestamp,
-    ifnull(
-        timestampadd(
-        'millisecond',
-        -1,
-        lag(th_dts) over (
-            partition by t_id
-            order by
-            th_dts desc
-        )
+    IFNULL(
+        TIMESTAMP_SUB(
+            TIMESTAMP(lag(th_dts) over (
+                partition by t_id
+                order by
+                th_dts desc
+            )), INTERVAL 1 MILLISECOND
         ),
-        to_timestamp('9999-12-31 23:59:59.999')
+        TIMESTAMP('9999-12-31 23:59:59.999')
     ) as end_timestamp,
     CASE
         WHEN (

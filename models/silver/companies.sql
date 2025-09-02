@@ -1,6 +1,12 @@
-
+with 
+s1 as (
+    select * except(cik,pts),
+    cik company_id,
+    cast(pts AS TIMESTAMP) as pts
+    from {{ ref("finwire_company") }}
+)
 select
-    cik as company_id,
+    company_id,
     st.st_name status,
     company_name name,
     ind.in_name industry,
@@ -15,17 +21,15 @@ select
     founding_date,
     sp_rating,
     pts as effective_timestamp,
-    ifnull(
-        timestampadd(
-            'millisecond',
-            -1,
-            lag(pts) over (
+    IFNULL(
+        TIMESTAMP_SUB(
+            TIMESTAMP(lag(pts) over (
                 partition by company_id
                 order by
                 pts desc
-            )
+            )), INTERVAL 1 MILLISECOND
         ),
-        to_timestamp('9999-12-31 23:59:59.999')
+        TIMESTAMP('9999-12-31 23:59:59.999')
     ) as end_timestamp,
     CASE
         WHEN (
@@ -37,6 +41,6 @@ select
         ) THEN TRUE
         ELSE FALSE
     END as IS_CURRENT
-from {{ ref("finwire_company") }} cmp
+from s1 cmp
 join {{ ref("reference_status_type") }} st on cmp.status = st.st_id
 join {{ ref("reference_industry") }} ind on cmp.industry_id = ind.in_id

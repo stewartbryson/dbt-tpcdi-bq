@@ -1,3 +1,8 @@
+with s1 as (
+    select * except(pts),
+    CAST(pts AS TIMESTAMP) as pts
+    from {{ ref("finwire_security") }}
+)
 select
     symbol,
     issue_type,
@@ -15,17 +20,15 @@ select
     coalesce(c1.name,c2.name) company_name,
     coalesce(c1.company_id, c2.company_id) company_id,
     pts as effective_timestamp,
-    ifnull(
-        timestampadd(
-        'millisecond',
-        -1,
-        lag(pts) over (
-            partition by symbol
-            order by
-            pts desc
-        )
+    IFNULL(
+        TIMESTAMP_SUB(
+            TIMESTAMP(lag(pts) over (
+                partition by symbol
+                order by
+                pts desc
+            )), INTERVAL 1 MILLISECOND
         ),
-        to_timestamp('9999-12-31 23:59:59.999')
+        TIMESTAMP('9999-12-31 23:59:59.999')
     ) as end_timestamp,
     CASE
         WHEN (
@@ -37,7 +40,7 @@ select
         ) THEN TRUE
         ELSE FALSE
     END as IS_CURRENT
-from {{ ref('finwire_security') }} s 
+from s1 s 
 left join {{ ref('companies') }} c1
 on s.cik = c1.company_id
 and pts between c1.effective_timestamp and c1.end_timestamp

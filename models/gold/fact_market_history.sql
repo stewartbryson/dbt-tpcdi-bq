@@ -15,6 +15,6 @@ SELECT
 FROM {{ ref("daily_market") }} dmh
 JOIN {{ ref("dim_security") }} s
 ON s.symbol = dmh.dm_s_symb
-    AND dmh.dm_date between s.effective_timestamp and s.end_timestamp
+    AND TIMESTAMP(dmh.dm_date) between s.effective_timestamp and s.end_timestamp
 LEFT JOIN {{ ref("wrk_company_financials")}} f
 USING (sk_company_id)
