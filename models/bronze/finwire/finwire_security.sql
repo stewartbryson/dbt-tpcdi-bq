@@ -1,6 +1,6 @@
 with s1 as (
     select *,
-    try_to_number(co_name_or_cik) as try_cik
+    SAFE_CAST(co_name_or_cik AS INT64) as try_cik
     from {{ source("finwire", "sec") }}
 )
 select  
@@ -10,10 +10,10 @@ select
     status,
     name,
     ex_id,
-    to_number(sh_out) as sh_out,
-    to_date(first_trade_date,'yyyymmdd') as first_trade_date,
-    to_date(first_exchange_date,'yyyymmdd') as first_exchange_date,
-    cast(dividend as float) as dividend,
+    CAST(sh_out AS INT64) as sh_out,
+    PARSE_DATE('%Y%m%d', CAST(first_trade_date AS STRING)) as first_trade_date,
+    PARSE_DATE('%Y%m%d', CAST(first_exchange_date AS STRING)) as first_exchange_date,
+    CAST(dividend AS FLOAT64) as dividend,
     try_cik cik,
-    case when try_cik is null then co_name_or_cik else null end company_name
+    CASE WHEN try_cik IS NULL THEN co_name_or_cik ELSE NULL END company_name
 from s1

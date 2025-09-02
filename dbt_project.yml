@@ -30,13 +30,17 @@ models:
   dbt_tpcdi:
     bronze:
       +schema: bronze
-      +materialized: materialized_view
+      +materialized: table
     silver:
       +schema: silver
-      +materialized: materialized_view
+      +materialized: table
     gold:
       +schema: gold
-      +materialized: materialized_view
+      +materialized: table
     work:
       +schema: work
       +materialized: ephemeral
+
+seeds:
+  dbt_tpcdi:
+    +schema: source

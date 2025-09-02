@@ -2,9 +2,9 @@ version: 2
 
 sources:
   - name: syndicated
-    database: tpcdi
-    schema: digen
-    loader: snowpark
+    database: stewart-bryson-423512
+    schema: dl_source
+    loader: seed
 
     tables:
       - name: prospect

@@ -24,17 +24,18 @@ with
             s1 b
             on a.dm_s_symb = b.dm_s_symb
             and a.fifty_two_week_low = b.dm_low
-            and b.dm_date between add_months(a.dm_date, -12) and a.dm_date
+            and b.dm_date between DATE_SUB(a.dm_date, INTERVAL 12 MONTH) and a.dm_date
         join
             s1 c
             on a.dm_s_symb = c.dm_s_symb
             and a.fifty_two_week_high = c.dm_high
-            and c.dm_date between add_months(a.dm_date, -12) and a.dm_date
+            and c.dm_date between DATE_SUB(a.dm_date, INTERVAL 12 MONTH) and a.dm_date
     )
-select *
-from s2
-qualify
-    row_number() over (
-        partition by dm_s_symb, dm_date
-        order by fifty_two_week_low_date, fifty_two_week_high_date
-    ) = 1
+select * from (
+    select *,
+        ROW_NUMBER() OVER (
+            partition by dm_s_symb, dm_date
+            order by fifty_two_week_low_date, fifty_two_week_high_date
+        ) as rn
+    from s2
+) where rn = 1

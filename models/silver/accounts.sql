@@ -1,10 +1,15 @@
+with c1 as (
+    select * except(action_ts),
+    cast(action_ts as timestamp) as action_ts
+    from {{ ref('crm_customer_mgmt') }}
+)
 select
-    action_type,
-    decode(action_type,
-      'NEW','Active',
-      'ADDACCT','Active',
-      'UPDACCT','Active',
-      'CLOSEACCT','Inactive') status,
+        action_type,
+        CASE
+            WHEN action_type IN ('NEW', 'ADDACCT', 'UPDACCT') THEN 'Active'
+            WHEN action_type = 'CLOSEACCT' THEN 'Inactive'
+            ELSE NULL
+        END status,
     ca_id account_id,
     ca_name account_desc,
     c_id customer_id,
@@ -33,17 +38,15 @@ select
     ca_tax_st tax_status,
     ca_b_id broker_id,
     action_ts as effective_timestamp,
-    ifnull(
-        timestampadd(
-        'millisecond',
-        -1,
-        lag(action_ts) over (
-            partition by ca_id
-            order by
-            action_ts desc
-        )
+    IFNULL(
+        TIMESTAMP_SUB(
+            lag(action_ts) over (
+                partition by ca_id
+                order by
+                action_ts desc
+            ), INTERVAL 1 MILLISECOND
         ),
-        to_timestamp('9999-12-31 23:59:59.999')
+        TIMESTAMP('9999-12-31 23:59:59.999')
     ) as end_timestamp,
     CASE
         WHEN (
@@ -56,7 +59,7 @@ select
         ELSE FALSE
     END as IS_CURRENT
 from
-    {{ ref('crm_customer_mgmt') }} c
+    c1 c
 left join
     {{ ref('reference_tax_rate') }} ntx
 on
